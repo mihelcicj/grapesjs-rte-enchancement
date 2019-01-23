@@ -32,7 +32,7 @@ mergeTextTypes(editor); // Must be last
 setTimeout(() => {
     console.log('editor.render()');
     editor.setComponents(`
-    <div data-rte>
+    <div>
         hello
         
         <p>Hej</p>
@@ -49,22 +49,7 @@ setTimeout(() => {
             <li>2 item</li>
         </ol>
     </div>
-    
-    <div>
-    name me
-    <a href="google" target="_blank">link</a>
-    
-    <ul>
-            <li>1 item</li>
-            <li>2 item</li>
-        </ul>
         
-        <ol>
-            <li>1 item</li>
-            <li>2 item</li>
-        </ol>
-    </div>
-    
     `.trim());
     editor.render();
 }, 0);

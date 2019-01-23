@@ -104,9 +104,12 @@ function extendText(editor) {
                 const rte = this.rte;
                 const contentOpt = {fromDisable: 1};
 
+                console.log('lala', rte);
+
                 if (rte && editable) {
                     try {
                         rte.disable(this, this.activeRte);
+                        rte.actionbar.parentNode.classList.remove('show-link-editor');
                     } catch (err) {
                         console.error(err);
                     }

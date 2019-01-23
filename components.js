@@ -3,15 +3,20 @@ function extendRTE(editor) {
 
     {
         const div = document.createElement('div');
-        div.classList.add('test');
+        div.setAttribute('id', 'link-details-container');
         div.innerHTML = `
             <div class="link-details">
-                <input id="link-url" type="text">
-                <button data-add>OK</button> 
-                <button data-remove>REM</button> 
+                <input id="link-url" type="text" placeholder="Enter url">
+                <button data-add>
+                    <span style="font-size: 14px;" class="fa fa-check"></span>
+                </button> 
+                <button data-remove>
+                    <span style="font-size: 14px;" class="fa fa-times"></span>
+                </button> 
             </div>
         `.trim();
         div.addEventListener('click', (e) => {
+            console.log('fired click');
             const selected = editor.getSelected();
 
             if (selected == null) {
@@ -30,18 +35,36 @@ function extendRTE(editor) {
             }
 
             console.log('selection', selection);
+            console.log(activeRte);
 
             if (target.hasAttribute('data-add')) {
 
                 if (url === '') {
                     return;
                 }
-                if (activeRte.selection().type !== 'Range') {
+
+                // if (activeRte.selection().type !== 'Range') {
+                //     return;
+                // }
+
+                if (activeRte.selection().type === 'Range') {
+                    activeRte.exec('createLink', url);
+                    activeRte.actionbar.parentElement.classList.remove('show-link-editor');
+                    activeRte.updateActiveActions();
+                    return;
+                } 
+
+                // Updating url
+                if (selection.anchorNode.parentNode.tagName === 'A') {
+                    selection.anchorNode.parentNode.setAttribute('href', url);
+                    activeRte.actionbar.parentElement.classList.remove('show-link-editor');
+                    activeRte.updateActiveActions();
                     return;
                 }
 
 
-                activeRte.exec('createLink', url);
+                // activeRte.exec('createLink', url);
+                // activeRte.actionbar.parentElement.classList.remove('show-link-editor');
                 // Does not work if the selection spans more than one node
                 // selection.anchorNode.parentNode.setAttribute('target', '_blank');
 
@@ -54,6 +77,7 @@ function extendRTE(editor) {
                 //         <a href="${url}" target="_blank">${activeRte.selection()}</a>
                 //     `.trim());
                 // }
+                // activeRte.updateActiveActions();
             }
 
             if (target.hasAttribute('data-remove')) {
@@ -63,12 +87,16 @@ function extendRTE(editor) {
                     range.selectNode(selection.anchorNode.parentNode);
                     selection.removeAllRanges();
                     selection.addRange(range);
+                    // activeRte.exec('unlink');
+                    // selection.collapse(selection.anchorNode.parentNode, 0);
                 }
 
                 activeRte.exec('unlink');
+                activeRte.actionbar.parentElement.classList.remove('show-link-editor');
+                activeRte.updateActiveActions();
             }
 
-            activeRte.updateActiveActions();
+            // activeRte.updateActiveActions();
         });
         rte.getToolbarEl().append(div);
         console.log('r', rte);
@@ -78,7 +106,7 @@ function extendRTE(editor) {
 
     console.log("ext", rte);
     rte.add("ordered-list", {
-        icon: "<b>OL</b>",
+        icon: `<span style="font-size: 14px;" class="fa fa-list-ol"></span>`,
         attributes: {
             title: "OL"
         },
@@ -89,7 +117,7 @@ function extendRTE(editor) {
     });
 
     rte.add("ordered-list", {
-        icon: "<b>UL</b>",
+        icon: `<span style="font-size: 14px;" class="fa fa-list-ul"></span>`,
         attributes: {
             title: "UL"
         },
@@ -102,7 +130,7 @@ function extendRTE(editor) {
     rte.add("link", {
         icon: `
             <div>
-             <span>link</span>
+             <span style="display: block; transform:rotate(45deg)">&supdsub;</span>
              <div class="link-active-indicator"></div>
             </div>
         `.trim(),
@@ -111,12 +139,15 @@ function extendRTE(editor) {
             id: "rte-link"
         },
         result: (rte, action) => {
-            console.log(action);
-            action.btn.classList.toggle('data-linked');
-            const selection = rte.selection();
-            if (selection.type.toLowerCase() !== 'range') {
-                return;
-            }
+            if (action.btn.classList.contains('disabled')) { return; }
+
+            action.btn.parentNode.parentNode.classList.toggle('show-link-editor');
+
+            // action.btn.classList.toggle('data-linked');
+            // const selection = rte.selection();
+            // if (selection.type.toLowerCase() !== 'range') {
+            //     return;
+            // }
 
             // console.log(rte.selection());
             // rte.insertHTML(`
@@ -127,23 +158,47 @@ function extendRTE(editor) {
             // editor.getSelected().view.el.focus();
         },
         update: (rte, action) => {
-            console.log('updated action');
-            console.log(rte);
+            console.log('ACT', action);
+            // console.log('updated action');
+            // console.log(rte);
             const selection = rte.selection();
             const anchorNode = selection.anchorNode;
             const onlyNode = anchorNode === selection.extentNode;
 
-            if (onlyNode === true && anchorNode.parentNode.tagName === 'A') {
+            // Selection is not updated until next tick
+            setTimeout(() => {
+                // console.log(selection.type, selection);
+                action.btn.classList.remove('disabled');
 
-                action.btn.classList.add('data-linked');
 
-                const url = anchorNode.parentNode.getAttribute('href');
-                rte.actionbar.parentElement.querySelector('#link-url').value = url;
-            } else {
-                action.btn.classList.remove('data-linked');
-                rte.actionbar.parentElement.querySelector('#link-url').value = '';
+                if (onlyNode === true && anchorNode.parentNode.tagName === 'A') {
 
-            }
+                    action.btn.classList.add('data-linked');
+
+                    const url = anchorNode.parentNode.getAttribute('href');
+                    rte.actionbar.parentElement.querySelector('#link-url').value = url;
+                } else {
+                    action.btn.classList.remove('data-linked');
+                    rte.actionbar.parentElement.querySelector('#link-url').value = '';
+
+                    if (selection.type !== 'Range') {
+                        action.btn.classList.add('disabled');
+                    }
+
+                    // if (selection.type !== 'Range') {
+                    //     rte.actionbar.parentElement.classList.remove('show-link-editor');
+                    // }
+                }
+
+                if (action.previousNode !== selection.anchorNode) {
+                    rte.actionbar.parentElement.classList.remove('show-link-editor');
+                }
+
+                action.previousNode = anchorNode;
+
+
+
+            }, 0);
         }
     });
 }

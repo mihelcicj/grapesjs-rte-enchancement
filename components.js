@@ -16,13 +16,11 @@ function extendRTE(editor) {
             </div>
         `.trim();
         div.addEventListener('click', (e) => {
-            console.log('fired click');
             const selected = editor.getSelected();
 
             if (selected == null) {
                 return;
             }
-
 
             const activeRte = selected.view.activeRte;
             const selection = activeRte.selection();
@@ -34,25 +32,18 @@ function extendRTE(editor) {
                 return;
             }
 
-            console.log('selection', selection);
-            console.log(activeRte);
-
             if (target.hasAttribute('data-add')) {
 
                 if (url === '') {
                     return;
                 }
 
-                // if (activeRte.selection().type !== 'Range') {
-                //     return;
-                // }
-
                 if (activeRte.selection().type === 'Range') {
                     activeRte.exec('createLink', url);
                     activeRte.actionbar.parentElement.classList.remove('show-link-editor');
                     activeRte.updateActiveActions();
                     return;
-                } 
+                }
 
                 // Updating url
                 if (selection.anchorNode.parentNode.tagName === 'A') {
@@ -62,9 +53,6 @@ function extendRTE(editor) {
                     return;
                 }
 
-
-                // activeRte.exec('createLink', url);
-                // activeRte.actionbar.parentElement.classList.remove('show-link-editor');
                 // Does not work if the selection spans more than one node
                 // selection.anchorNode.parentNode.setAttribute('target', '_blank');
 
@@ -87,7 +75,6 @@ function extendRTE(editor) {
                     range.selectNode(selection.anchorNode.parentNode);
                     selection.removeAllRanges();
                     selection.addRange(range);
-                    // activeRte.exec('unlink');
                     // selection.collapse(selection.anchorNode.parentNode, 0);
                 }
 
@@ -95,8 +82,6 @@ function extendRTE(editor) {
                 activeRte.actionbar.parentElement.classList.remove('show-link-editor');
                 activeRte.updateActiveActions();
             }
-
-            // activeRte.updateActiveActions();
         });
         rte.getToolbarEl().append(div);
         console.log('r', rte);
@@ -139,7 +124,9 @@ function extendRTE(editor) {
             id: "rte-link"
         },
         result: (rte, action) => {
-            if (action.btn.classList.contains('disabled')) { return; }
+            if (action.btn.classList.contains('disabled')) {
+                return;
+            }
 
             action.btn.parentNode.parentNode.classList.toggle('show-link-editor');
 
@@ -195,7 +182,6 @@ function extendRTE(editor) {
                 }
 
                 action.previousNode = anchorNode;
-
 
 
             }, 0);

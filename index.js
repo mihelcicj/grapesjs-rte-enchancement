@@ -19,6 +19,28 @@ editor.DomComponents.getWrapper().set({
     highlightable: false
 });
 
+// Commands
+// const deleteCommand = editor.Commands.get('core:component-delete');
+// const runFunction = deleteCommand.run;
+// deleteCommand.run = function(ed, sender, opt = {}) {
+//     console.log(ed, sender, opt);
+//     if (sender != null) {
+//         ed.getSelected().view.disableEditing();
+//     }
+//     runFunction(ed, sender, opt);
+// };
+
+editor.Commands.get('tlb-delete').run = function(ed) {
+    ed.getSelected().view.disableEditing();
+    ed.runCommand('core:component-delete')
+};
+
+editor.Commands.get('tlb-clone').run = function(ed) {
+    ed.getSelected().view.disableEditing();
+    ed.runCommand('core:copy');
+    ed.runCommand('core:paste');
+};
+
 // Define custom types
 
 extendRTE(editor);

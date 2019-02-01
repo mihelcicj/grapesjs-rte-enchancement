@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "grapesjs": "^0.14.50"
+    "grapesjs": "0.14.50"
   }
 }

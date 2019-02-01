@@ -1,3 +1,21 @@
+$dark-blue: #054d70;
+$dark-slate-gray: #526473;
+$steel-blue: #7690a5;
+$medium-slate-gray: #acbbc9;
+$light-slate-gray: #eef3f6;
+$pale-color: rgba(193, 207, 220, 0.8);
+
+$accent-green: #00d25c;
+$accent-green-dark: #00b851;
+$accent-green-darker: #009f46;
+
+$medium-blue: #127ea4;
+$vivid-blue: #3fbbe7;
+$coral-red: #f66c69;
+$shopify-green:#95c13e;
+
+$sunset-orange: #FFC107;
+
 /* Let's highlight canvas boundaries */
 #gjs {
   border: 3px solid #444;
@@ -10,30 +28,20 @@
   height: 100%;
 }
 
-
-// GJS toolbar enhancements
+// RTE toolbar styles
 .gjs-rte-toolbar {
-
+  position: absolute;
   overflow: hidden;
   height: 26px;
-
-  transition: width 250ms linear;
-
-  &.show-link-editor {
-    //width: 250px;
-
-    .gjs-rte-actionbar {
-      opacity: 0;
-      transform: translate3d(0, -27px, 0);
-    }
-    #link-details-container {
-      opacity: 1;
-      transform: translate3d(0, -27px, 0);
-    }
-  }
+  border: none !important;
+  border-radius: 4px !important;
+  background-color: #273F4B !important;
 
   .gjs-rte-actionbar {
-    height: 26px;
+    height: 100%;
+    background-color: #273F4B !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+
     opacity: 1;
     transform: translate3d(0, 0, 0);
     transition: transform 150ms ease-in-out, opacity 150ms;
@@ -41,6 +49,9 @@
 
   .gjs-rte-action {
     min-width: 32px;
+    padding: 10px !important;
+    border-right: none !important;
+    font-size: 14px !important;
   }
 
   #link-details-container {
@@ -59,42 +70,44 @@
       padding: 0 4px;
 
       input {
-        width: 0;
         flex: 1;
-        background: none;
-        border: 0;
+        width: 0;
         padding: 4px;
-        color: white;
+        border: 0;
+        background: none;
+        color: white !important;
+        font-weight: 300 !important;
+        letter-spacing: 0.02em; // White text looks squished on darker backgrounds
         outline: none;
+
+        &::placeholder {
+          color: $pale-color !important;
+        }
       }
 
       button {
-        border: 0;
-        background: rgba(255,255,255,0.15);
-        border-radius: 100%;
-        height: 20px;
         width: 20px;
+        height: 20px;
         padding: 0;
         margin-left: 4px;
-        color: #929292;
+        border: 0;
+        background: none;
+        border-radius: 100%;
+        color: $pale-color;
 
         span {
           pointer-events: none;
         }
 
-        &:hover {
-          background: rgba(255,255,255,0.90);
-          color: black;
+        &[data-add]:hover {
+          color: $accent-green;
           cursor: pointer;
         }
-      }
 
-      [data-add] {
-        //color: #8BC34A;
-      }
-
-      [data-remove] {
-        //color: #F44336;
+        &[data-remove]:hover {
+          color: $coral-red;
+          cursor: pointer;
+        }
       }
     }
   }
@@ -103,14 +116,14 @@
     .link-active-indicator {
       display: none;
       position: absolute;
-      top: 2px;
-      right: 2px;
+      top: 3px;
+      right: 3px;
       width: 4px;
       height: 4px;
       border: 1px solid transparent;
       border-radius: 100%;
-      background: #FFC107;
-      box-shadow: 0 0 2px 2px rgba(255, 152, 0, 0.52);
+      background: $sunset-orange;
+      box-shadow: 0 0 2px 2px rgba($sunset-orange, 0.5);
     }
 
     &.data-linked {
@@ -124,5 +137,16 @@
     }
   }
 
+  &.show-link-editor {
+    .gjs-rte-actionbar {
+      opacity: 0;
+      transform: translate3d(0, -26px, 0);
+    }
+
+    #link-details-container {
+      opacity: 1;
+      transform: translate3d(0, -26px, 0);
+    }
+  }
 
 }

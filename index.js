@@ -19,59 +19,90 @@ editor.DomComponents.getWrapper().set({
     highlightable: false
 });
 
-// Commands
-// const deleteCommand = editor.Commands.get('core:component-delete');
-// const runFunction = deleteCommand.run;
-// deleteCommand.run = function(ed, sender, opt = {}) {
-//     console.log(ed, sender, opt);
-//     if (sender != null) {
-//         ed.getSelected().view.disableEditing();
-//     }
-//     runFunction(ed, sender, opt);
-// };
+const rte = editor.RichTextEditor;
 
-editor.Commands.get('tlb-delete').run = function(ed) {
-    ed.getSelected().view.disableEditing();
-    ed.runCommand('core:component-delete')
-};
+['bold', 'italic', 'strikethrough', 'underline', 'link'].forEach(i => rte.remove(i));
+['Bold', 'Italic', 'Underline'].forEach(opt => {
+    const lowerCaseOpt = opt.toLowerCase();
+    rte.add(lowerCaseOpt, {
+        icon: `<span class="fa fa-${lowerCaseOpt}"></span>`,
+        attributes: {title: opt},
+        result: rt => rt.exec(lowerCaseOpt)
+    });
+});
+rte.add('ordered-list', {
+    icon: `<span class="fa fa-list-ol"></span>`,
+    attributes: {
+        title: 'OL'
+    },
+    result: rte => {
+        rte.exec('insertOrderedList');
+        editor.getSelected().view.el.focus();
+    }
+});
 
-editor.Commands.get('tlb-clone').run = function(ed) {
-    ed.getSelected().view.disableEditing();
-    ed.runCommand('core:copy');
-    ed.runCommand('core:paste');
-};
+rte.add('ordered-list', {
+    icon: `<span class="fa fa-list-ul"></span>`,
+    attributes: {
+        title: 'UL'
+    },
+    result: rte => {
+        rte.exec('insertUnorderedList');
+        editor.getSelected().view.el.focus();
+    }
+});
+rte.add('insertHTML', {
+    icon: `INS`,
+    attributes: {title: 'Insert'},
+    result: rt => rt.insertHTML(`<span data-stylable="true" style="background:rgba(255,0,0, 0.1)">${rt.selection()}</span>`)
+});
+
+// Extending default type with helper methods
+extendDefaultPrototype(editor);
 
 // Define custom types
+defineText(editor);
+defineLink(editor);
+defineSpan(editor);
+// defineStylables(editor);
+// defineParagraph(editor);
+defineList(editor);
 
-extendRTE(editor);
-extendText(editor);
-
-
-
-mergeTextTypes(editor); // Must be last
+// extendText(editor); // Must be first
+// extendRichTextEditor(editor);
+// mergeTextTypes(editor); // Must be last
 
 // Render
 setTimeout(() => {
-    console.log('editor.render()');
     editor.setComponents(`
+        
+        <div style="margin-top: 60px;">
+            text <a href="#">link</a>
+        </div>
+  
+        <div style="margin-top: 60px;">
+            text <a href="#">link</a>
+        </div>
+    `.trim());
+    editor.render();
+}, 0);
+
+/*
     <div>
         hello
-        
+
         <p>Hej</p>
-        
+
         <p><a href="google" target="here">link</a></p>
-        
+
         <ul>
             <li>1 item</li>
             <li>2 item</li>
         </ul>
-        
+
         <ol>
             <li>1 item</li>
             <li>2 item</li>
         </ol>
     </div>
-        
-    `.trim());
-    editor.render();
-}, 0);
+ */

@@ -1,192 +1,23 @@
-function extendRTE(editor) {
-    const rte = editor.RichTextEditor;
 
-    {
-        const div = document.createElement('div');
-        div.setAttribute('id', 'link-details-container');
-        div.innerHTML = `
-            <div class="link-details">
-                <input id="link-url" type="text" placeholder="Enter url">
-                <button data-add>
-                    <span style="font-size: 14px;" class="fa fa-check"></span>
-                </button> 
-                <button data-remove>
-                    <span style="font-size: 14px;" class="fa fa-times"></span>
-                </button> 
-            </div>
-        `.trim();
-        div.addEventListener('click', (e) => {
-            const selected = editor.getSelected();
+function extendDefaultPrototype(editor) {
+    const defaultType = editor.DomComponents.getType('default');
+    defaultType.model.prototype.outermostTextParent = function() {
+        let lastTextParent = null;
+        let parent = this.parent && this.parent();
 
-            if (selected == null) {
-                return;
+        console.group('outermostTextParent');
+        while (parent != null) {
+            console.log(parent);
+            if (parent.attributes.subtype === 'text') {
+                lastTextParent = parent;
             }
 
-            const activeRte = selected.view.activeRte;
-            const selection = activeRte.selection();
-            const target = e.target;
-
-            const url = div.querySelector('#link-url').value.trim();
-
-            if (target == null) {
-                return;
-            }
-
-            if (target.hasAttribute('data-add')) {
-
-                if (url === '') {
-                    return;
-                }
-
-                if (activeRte.selection().type === 'Range') {
-                    activeRte.exec('createLink', url);
-                    activeRte.actionbar.parentElement.classList.remove('show-link-editor');
-                    activeRte.updateActiveActions();
-                    return;
-                }
-
-                // Updating url
-                if (selection.anchorNode.parentNode.tagName === 'A') {
-                    selection.anchorNode.parentNode.setAttribute('href', url);
-                    activeRte.actionbar.parentElement.classList.remove('show-link-editor');
-                    activeRte.updateActiveActions();
-                    return;
-                }
-
-                // Does not work if the selection spans more than one node
-                // selection.anchorNode.parentNode.setAttribute('target', '_blank');
-
-                // if (selection.anchorNode.parentNode.tagName === 'A') {
-                //     selection.anchorNode.parentNode.setAttribute('href', url);
-                // } else {
-                //     if (activeRte.selection().type !== 'Range') { return; }
-                //
-                //     activeRte.insertHTML(`
-                //         <a href="${url}" target="_blank">${activeRte.selection()}</a>
-                //     `.trim());
-                // }
-                // activeRte.updateActiveActions();
-            }
-
-            if (target.hasAttribute('data-remove')) {
-                // If we selected a link, remove the whole link
-                if (selection.anchorNode.parentNode.tagName === 'A') {
-                    const range = document.createRange();
-                    range.selectNode(selection.anchorNode.parentNode);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    // selection.collapse(selection.anchorNode.parentNode, 0);
-                }
-
-                activeRte.exec('unlink');
-                activeRte.actionbar.parentElement.classList.remove('show-link-editor');
-                activeRte.updateActiveActions();
-            }
-        });
-        rte.getToolbarEl().append(div);
-        console.log('r', rte);
-    }
-
-    ["strikethrough", "link"].forEach(i => rte.remove(i));
-
-    console.log("ext", rte);
-    rte.add("ordered-list", {
-        icon: `<span style="font-size: 14px;" class="fa fa-list-ol"></span>`,
-        attributes: {
-            title: "OL"
-        },
-        result: rte => {
-            rte.exec("insertOrderedList");
-            editor.getSelected().view.el.focus();
+            parent = parent.parent && parent.parent();
         }
-    });
+        console.groupEnd();
 
-    rte.add("ordered-list", {
-        icon: `<span style="font-size: 14px;" class="fa fa-list-ul"></span>`,
-        attributes: {
-            title: "UL"
-        },
-        result: rte => {
-            rte.exec("insertUnorderedList");
-            editor.getSelected().view.el.focus();
-        }
-    });
-
-    rte.add("link", {
-        icon: `
-            <div>
-             <span style="display: block; transform:rotate(45deg)">&supdsub;</span>
-             <div class="link-active-indicator"></div>
-            </div>
-        `.trim(),
-        attributes: {
-            title: "Link",
-            id: "rte-link"
-        },
-        result: (rte, action) => {
-            if (action.btn.classList.contains('disabled')) {
-                return;
-            }
-
-            action.btn.parentNode.parentNode.classList.toggle('show-link-editor');
-
-            // action.btn.classList.toggle('data-linked');
-            // const selection = rte.selection();
-            // if (selection.type.toLowerCase() !== 'range') {
-            //     return;
-            // }
-
-            // console.log(rte.selection());
-            // rte.insertHTML(`
-            //
-            //     <a href="#">${rte.selection()}</a>
-            //
-            // `.trim());
-            // editor.getSelected().view.el.focus();
-        },
-        update: (rte, action) => {
-            console.log('ACT', action);
-            // console.log('updated action');
-            // console.log(rte);
-            const selection = rte.selection();
-            const anchorNode = selection.anchorNode;
-            const onlyNode = anchorNode === selection.extentNode;
-
-            // Selection is not updated until next tick
-            setTimeout(() => {
-                // console.log(selection.type, selection);
-                action.btn.classList.remove('disabled');
-
-
-                if (onlyNode === true && anchorNode.parentNode.tagName === 'A') {
-
-                    action.btn.classList.add('data-linked');
-
-                    const url = anchorNode.parentNode.getAttribute('href');
-                    rte.actionbar.parentElement.querySelector('#link-url').value = url;
-                } else {
-                    action.btn.classList.remove('data-linked');
-                    rte.actionbar.parentElement.querySelector('#link-url').value = '';
-
-                    if (selection.type !== 'Range') {
-                        action.btn.classList.add('disabled');
-                    }
-
-                    // if (selection.type !== 'Range') {
-                    //     rte.actionbar.parentElement.classList.remove('show-link-editor');
-                    // }
-                }
-
-                if (action.previousNode !== selection.anchorNode) {
-                    rte.actionbar.parentElement.classList.remove('show-link-editor');
-                }
-
-                action.previousNode = anchorNode;
-
-
-            }, 0);
-        }
-    });
+        return lastTextParent;
+    };
 }
 
 function mergeTextTypes(editor) {
@@ -204,5 +35,417 @@ function mergeTextTypes(editor) {
                 }
             }
         },
+    });
+}
+
+// function defineDefault(editor) {
+//     const comps = editor.DomComponents;
+//     comps.addType('default', {
+//         extend: 'default',
+//         extendView: 'default',
+//         isComponent(el) {
+//
+//         }
+//     });
+// }
+
+function defineText(editor) {
+    const comps = editor.DomComponents;
+    const textViewInitialize = comps.getType('text').view.prototype.initialize;
+
+    comps.addType('text', {
+        extend: 'text',
+        extendView: 'text',
+        isComponent(el) {
+          if (el.getAttribute && el.getAttribute('data-ch-type') === 'text') {
+              return {
+                  type: 'text'
+              }
+          }
+        },
+        model: {
+            defaults: {
+                subtype: 'text',
+                hoverable: false,
+                highlightable: false,
+                editable: true,
+                attributes: {
+                    'data-ch-type': 'text'
+                }
+            },
+            // myMethod() {
+            //   console.log('hello');
+            // }
+        },
+        view: {
+            events: {
+                dblclick: 'onDoubleClick'
+            },
+            // events: {
+            //     // 'click': 'handleClick'
+            // },
+            // handleClick(e) {
+            //     // console.log('sel', editor.getSelected());
+            //     // console.log(this, e);
+            //     this.onActive(e);
+            // },
+
+            onDoubleClick(e) {
+                console.log(e);
+                console.log('ondblclick', this);
+                e.preventDefault();
+
+                this.onActive(e);
+            },
+            initialize(o) {
+                textViewInitialize.call(this, o);
+                // Clean all child components
+                // Mostly removes boxes and default types
+                this.model.get('components').each(model => this.clean(model));
+            },
+            onActive(e) {
+                // We place this before stopPropagation in case of nested
+                // text components will not block the editing (#1394)
+                if (this.rteEnabled || !this.model.get('editable')) {
+                    return;
+                }
+
+                const textParent = this.model.outermostTextParent();
+                if (textParent != null) {
+                    console.log('textparent found', textParent);
+                    setTimeout(() => {
+                        editor.select(textParent);
+                        textParent.view.onActive(null);
+                    }, 0);
+
+                    return;
+                }
+
+                e && e.stopPropagation && e.stopPropagation();
+                const rte = this.rte;
+                const children = this.model.get('components');
+                children.forEach(child => {
+                    console.log(child);
+                    if (child.view && child.view.el && child.attributes) {
+                        if (child.attributes.subtype === 'text') {
+                            child.view.el.setAttribute('contenteditable', 'true');
+                        }
+                    }
+                });
+
+                if (rte) {
+                    try {
+                        this.activeRte = rte.enable(this, this.activeRte);
+                        // this.activeRte.selection().collapseToEnd();
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+                //
+                // console.log(this.activeRte.selection());
+                // console.log(this.activeRte.doc);
+                // {
+                //
+                // }
+                //
+                // // Consolidate range into caret
+                // const selection = this.activeRte.selection();
+                // const doc = this.activeRte.doc;
+                //
+
+                this.rteEnabled = 1;
+                this.toggleEvents(1);
+            },
+            disableEditing() {
+                console.log('hello', this.el);
+                const model = this.model;
+                const editable = model.get('editable');
+                const rte = this.rte;
+                const contentOpt = { fromDisable: 1 };
+
+                if (rte && editable) {
+                    try {
+                        rte.disable(this, this.activeRte);
+                    } catch (err) {
+                        console.error(err);
+                    }
+
+                    const content = this.getChildrenContainer().innerHTML;
+                    const comps = model.get('components');
+                    comps.length && comps.reset();
+                    model.set('content', '', contentOpt);
+
+                    // If there is a custom RTE the content is just baked staticly
+                    // inside 'content'
+                    if (rte.customRte) {
+                        // Avoid double content by removing its children components
+                        // and force to trigger change
+                        model.set('content', content, contentOpt);
+                    } else {
+                        // const clean = model => {
+                        //     // const selectable = !['text', 'default', ''].some(type =>
+                        //     //     model.is(type)
+                        //     // );
+                        //
+                        //     model.set({
+                        //         // toolbar: '',
+                        //         hoverable: false,
+                        //         selectable: false
+                        //     });
+                        //
+                        //     console.log(model, model.attributes.subtype);
+                        //
+                        //     if (model.attributes.subtype === 'text' && model.attributes.type !== 'text') {
+                        //         model.set({
+                        //             hoverable: true,
+                        //             selectable: true
+                        //         });
+                        //     }
+                        //
+                        //
+                        //
+                        //     // const selectable = !['text', 'default', ''].some(type =>
+                        //     //     model.is(type)
+                        //     // );
+                        //     // console.log('weird', model.attributes.type);
+                        //     //
+                        //     // if (model.is('') || model.is('default')) {
+                        //     //     model.set({
+                        //     //         type: 'text',
+                        //     //         subtype: 'text',
+                        //     //         hoverable: false,
+                        //     //         highlightable: false,
+                        //     //         editable: true,
+                        //     //     });
+                        //     // }
+                        //
+                        //     model.set({
+                        //         // editable: selectable && model.get('editable'),
+                        //         // highlightable: 0,
+                        //         // removable: 0,
+                        //         // draggable: 0,
+                        //         // copyable: 0,
+                        //         // selectable: selectable,
+                        //         // hoverable: selectable,
+                        //         // toolbar: ''
+                        //     });
+                        //     model.get('components').each(model => clean(model));
+                        // };
+
+                        // Avoid re-render on reset with silent option
+                        model.trigger('change:content', model, '', contentOpt);
+                        comps.add(content);
+                        comps.each(model => this.clean(model));
+                        comps.trigger('resetNavigator');
+                    }
+                }
+
+                this.rteEnabled = 0;
+                this.toggleEvents();
+            },
+            clean(model) {
+                console.log('cleaning');
+                // const selectable = !['text', 'default', ''].some(type =>
+                //     model.is(type)
+                // );
+
+                model.set({
+                    // toolbar: '',
+                    hoverable: false,
+                    selectable: false
+                });
+
+                console.log(model, model.attributes.subtype);
+
+                if (model.attributes.subtype === 'text' && model.attributes.type !== 'text') {
+                    model.set({
+                        hoverable: true,
+                        selectable: true
+                    });
+                }
+
+
+
+                // const selectable = !['text', 'default', ''].some(type =>
+                //     model.is(type)
+                // );
+                // console.log('weird', model.attributes.type);
+                //
+                // if (model.is('') || model.is('default')) {
+                //     model.set({
+                //         type: 'text',
+                //         subtype: 'text',
+                //         hoverable: false,
+                //         highlightable: false,
+                //         editable: true,
+                //     });
+                // }
+
+                // model.set({
+                    // editable: selectable && model.get('editable'),
+                    // highlightable: 0,
+                    // removable: 0,
+                    // draggable: 0,
+                    // copyable: 0,
+                    // selectable: selectable,
+                    // hoverable: selectable,
+                    // toolbar: ''
+                // });
+                model.get('components').each(model => this.clean(model));
+            }
+        }
+    });
+}
+
+function defineLink(editor) {
+    const comps = editor.DomComponents;
+    comps.addType('link', {
+        model: {
+            defaults: {
+                subtype: 'text',
+                name: 'Link',
+                badgable: false,
+                hoverable: true,
+                highlightable: false,
+                editable: true,
+            }
+        },
+        view: {
+            onActive: comps.getType('text').view.prototype.onActive
+        }
+        // view: {
+        //     disableEditing() {
+        //         console.log('hello link', this.el);
+        //         const model = this.model;
+        //         const editable = model.get('editable');
+        //         const rte = this.rte;
+        //         const contentOpt = { fromDisable: 1 };
+        //
+        //         if (rte && editable) {
+        //             try {
+        //                 rte.disable(this, this.activeRte);
+        //             } catch (err) {
+        //                 console.error(err);
+        //             }
+        //
+        //             const content = this.getChildrenContainer().innerHTML;
+        //             const comps = model.get('components');
+        //             comps.length && comps.reset();
+        //             model.set('content', '', contentOpt);
+        //
+        //             // If there is a custom RTE the content is just baked staticly
+        //             // inside 'content'
+        //             if (rte.customRte) {
+        //                 // Avoid double content by removing its children components
+        //                 // and force to trigger change
+        //                 model.set('content', content, contentOpt);
+        //             } else {
+        //                 const clean = model => {
+        //                     const selectable = !['text', 'default', ''].some(type =>
+        //                         model.is(type)
+        //                     );
+        //                     model.set({
+        //                         editable: selectable && model.get('editable'),
+        //                         highlightable: 0,
+        //                         removable: 0,
+        //                         draggable: 0,
+        //                         copyable: 0,
+        //                         selectable: selectable,
+        //                         hoverable: selectable,
+        //                         toolbar: ''
+        //                     });
+        //                     model.get('components').each(model => clean(model));
+        //                 };
+        //
+        //                 // Avoid re-render on reset with silent option
+        //                 model.trigger('change:content', model, '', contentOpt);
+        //                 comps.add(content);
+        //                 comps.each(model => clean(model));
+        //                 comps.trigger('resetNavigator');
+        //             }
+        //         }
+        //
+        //         this.rteEnabled = 0;
+        //         this.toggleEvents();
+        //     },
+        // }
+    })
+}
+
+function defineSpan(editor) {
+    const comps = editor.DomComponents;
+    comps.addType('span', {
+        extend: 'text',
+        extendView: 'text',
+        isComponent(el) {
+            if (['SPAN', 'B', 'I', 'U'].includes(el.tagName)) {
+                return {
+                    type: 'span',
+                }
+            }
+        },
+    });
+}
+
+function defineStylables(editor) {
+    const comps = editor.DomComponents;
+    comps.addType('stylable-span', {
+        extend: 'text',
+        extendView: 'text',
+        isComponent(el) {
+            if (['SPAN'].includes(el.tagName)
+                && el.hasAttribute('data-stylable') === true) {
+                console.log('span?', el);
+                return {
+                    type: 'stylable-span',
+                }
+            }
+        },
+        model: {
+            defaults: {
+                name: 'Stylable',
+                subType: 'text',
+                // hoverable: false,
+                // selectable: false,
+                // badgable: false,
+                // draggable: false,
+                // droppable: false,
+            }
+        }
+    });
+}
+
+function defineParagraph(editor) {
+    const comps = editor.DomComponents;
+    comps.addType('paragraph', {
+        extend: 'text',
+        extendView: 'text',
+        isComponent(el) {
+            if (el.tagName === 'P') {
+                console.log('p?', el);
+                return {
+                    type: 'paragraph',
+                    subType: 'text',
+                    // editable: false,
+                    // hoverable: false,
+                }
+            }
+        }
+    });
+}
+
+
+function defineList(editor) {
+    const comps = editor.DomComponents;
+    comps.addType('list', {
+        extend: 'text',
+        extendView: 'text',
+        isComponent(el) {
+            if (['UL', 'OL'].includes(el.tagName)) {
+                return {
+                    type: 'list'
+                }
+            }
+        }
     })
 }

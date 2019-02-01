@@ -1,8 +1,13 @@
 <component name="ProjectDictionaryState">
   <dictionary name="jasam">
     <words>
+      <w>actionbar</w>
       <w>autorender</w>
       <w>badgable</w>
+      <w>contenteditable</w>
+      <w>droppable</w>
+      <w>hoverable</w>
+      <w>stylables</w>
     </words>
   </dictionary>
 </component>

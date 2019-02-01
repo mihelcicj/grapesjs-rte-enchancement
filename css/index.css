@@ -11,26 +11,26 @@
 }
 
 .gjs-rte-toolbar {
+  position: absolute;
   overflow: hidden;
   height: 26px;
-  transition: width 250ms linear;
-}
-.gjs-rte-toolbar.show-link-editor .gjs-rte-actionbar {
-  opacity: 0;
-  transform: translate3d(0, -27px, 0);
-}
-.gjs-rte-toolbar.show-link-editor #link-details-container {
-  opacity: 1;
-  transform: translate3d(0, -27px, 0);
+  border: none !important;
+  border-radius: 4px !important;
+  background-color: #273F4B !important;
 }
 .gjs-rte-toolbar .gjs-rte-actionbar {
-  height: 26px;
+  height: 100%;
+  background-color: #273F4B !important;
+  color: rgba(255, 255, 255, 0.6) !important;
   opacity: 1;
   transform: translate3d(0, 0, 0);
   transition: transform 150ms ease-in-out, opacity 150ms;
 }
 .gjs-rte-toolbar .gjs-rte-action {
   min-width: 32px;
+  padding: 10px !important;
+  border-right: none !important;
+  font-size: 14px !important;
 }
 .gjs-rte-toolbar #link-details-container {
   width: 100%;
@@ -47,49 +47,65 @@
   padding: 0 4px;
 }
 .gjs-rte-toolbar #link-details-container .link-details input {
-  width: 0;
   flex: 1;
-  background: none;
-  border: 0;
+  width: 0;
   padding: 4px;
-  color: white;
+  border: 0;
+  background: none;
+  color: white !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.02em;
   outline: none;
 }
+.gjs-rte-toolbar #link-details-container .link-details input::placeholder {
+  color: rgba(193, 207, 220, 0.8) !important;
+}
 .gjs-rte-toolbar #link-details-container .link-details button {
-  border: 0;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 100%;
-  height: 20px;
   width: 20px;
+  height: 20px;
   padding: 0;
   margin-left: 4px;
-  color: #929292;
+  border: 0;
+  background: none;
+  border-radius: 100%;
+  color: rgba(193, 207, 220, 0.8);
 }
 .gjs-rte-toolbar #link-details-container .link-details button span {
   pointer-events: none;
 }
-.gjs-rte-toolbar #link-details-container .link-details button:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: black;
+.gjs-rte-toolbar #link-details-container .link-details button[data-add]:hover {
+  color: #00d25c;
+  cursor: pointer;
+}
+.gjs-rte-toolbar #link-details-container .link-details button[data-remove]:hover {
+  color: #f66c69;
   cursor: pointer;
 }
 .gjs-rte-toolbar #rte-link .link-active-indicator {
   display: none;
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 3px;
+  right: 3px;
   width: 4px;
   height: 4px;
   border: 1px solid transparent;
   border-radius: 100%;
   background: #FFC107;
-  box-shadow: 0 0 2px 2px rgba(255, 152, 0, 0.52);
+  box-shadow: 0 0 2px 2px rgba(255, 193, 7, 0.5);
 }
 .gjs-rte-toolbar #rte-link.data-linked .link-active-indicator {
   display: block;
 }
 .gjs-rte-toolbar #rte-link.disabled {
   color: gray;
+}
+.gjs-rte-toolbar.show-link-editor .gjs-rte-actionbar {
+  opacity: 0;
+  transform: translate3d(0, -26px, 0);
+}
+.gjs-rte-toolbar.show-link-editor #link-details-container {
+  opacity: 1;
+  transform: translate3d(0, -26px, 0);
 }
 
 /*# sourceMappingURL=index.css.map */

@@ -1,6 +1,12 @@
-a {
-  cursor: text;
-  &:hover {
-    color: unset;
-  }
+//a {
+//  cursor: text;
+//  &:hover {
+//    color: unset;
+//  }
+//}
+
+
+.gjs-comp-selected.gjs-comp-selected {
+  outline: 1px solid #3b97e3 !important;
+  outline-offset: 0;
 }

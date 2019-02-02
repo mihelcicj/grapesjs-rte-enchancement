@@ -2,11 +2,11 @@ const editor = grapesjs.init({
     container: "#gjs",
     fromElement: false,
     // Size of the editor
-    height: "300px",
+    height: "600px",
     width: "auto",
     // Disable the storage manager for the moment
     storageManager: {type: null},
-    panels: {defaults: []},
+    // panels: {defaults: []},
     autorender: 0,
     canvas: {
         styles: ['css/iframe.css'],
@@ -30,7 +30,7 @@ const rte = editor.RichTextEditor;
 extendDefaultRtePrototype(rte);
 
 ['bold', 'italic', 'strikethrough', 'underline', 'link'].forEach(i => rte.remove(i));
-['Bold', 'Italic', 'Underline', 'createLink', 'unlink', 'insertOrderedList'].forEach(opt => {
+['Bold', 'Italic', 'Underline', 'CreateLink', 'Unlink', 'InsertOrderedList'].forEach(opt => {
     const lowerCaseOpt = opt.toLowerCase();
     rte.add(lowerCaseOpt, {
         icon: `<span class="fa fa-${lowerCaseOpt}"></span>`,
@@ -62,6 +62,8 @@ extendDefaultRtePrototype(rte);
 
                     el.click();
                 }, 0);
+
+                return;
             }
 
             const selection = rt.selection();
@@ -115,7 +117,7 @@ extendDefaultRtePrototype(rte);
             //         el.click();
             //     }, 0);
             // }
-            editor.getSelected().view.el.focus();
+            // editor.getSelected().view.el.focus();
         }
     });
 });
@@ -164,9 +166,23 @@ setTimeout(() => {
             text <a href="#">link</a>
         </div>
   
-        <div style="margin-top: 60px;">
-            text <a href="#">link</a>
-        </div>
+        <div>
+            hello
+
+            <!--<p>Hej</p>-->
+    <!---->
+            <!--<p><a href="google" target="here">link</a></p>-->
+    
+            <ul>
+                <li>1 item</li>
+                <li>2 item</li>
+            </ul>
+    
+            <ol>
+                <li>1 item</li>
+                <li>2 item</li>
+            </ol>
+    </div>
     `.trim());
     editor.render();
 }, 0);

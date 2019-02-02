@@ -9,9 +9,16 @@ const editor = grapesjs.init({
     panels: {defaults: []},
     autorender: 0,
     canvas: {
-        styles: ['css/iframe.css']
+        styles: ['css/iframe.css'],
+        notTextable: ['button', 'a', 'input[type=checkbox]', 'input[type=radio]']
     }
 });
+
+// Debugging only
+setTimeout(() => {
+editor.getWrapper().view.el.ownerDocument.defaultView.editor = editor;
+
+}, 500);
 
 editor.DomComponents.getWrapper().set({
     badgable: false,
@@ -20,6 +27,8 @@ editor.DomComponents.getWrapper().set({
 });
 
 const rte = editor.RichTextEditor;
+console.log(rte);
+extendDefaultRtePrototype(rte);
 
 ['bold', 'italic', 'strikethrough', 'underline', 'link'].forEach(i => rte.remove(i));
 ['Bold', 'Italic', 'Underline'].forEach(opt => {
@@ -27,7 +36,37 @@ const rte = editor.RichTextEditor;
     rte.add(lowerCaseOpt, {
         icon: `<span class="fa fa-${lowerCaseOpt}"></span>`,
         attributes: {title: opt},
-        result: rt => rt.exec(lowerCaseOpt)
+        result: (rt, action) => {
+            console.log(action, rt);
+            rt.exec(lowerCaseOpt);
+            const selection = rt.selection();
+            const range = selection.getRangeAt(0).cloneRange();
+            const position = range.getBoundingClientRect();
+
+            if (selection.type === 'Range') {
+                let child = editor.getSelected();
+                child.view.disableEditing({disableRte: false});
+                child.view.onActive();
+
+                setTimeout(() => {
+                    const el = rt.doc.elementFromPoint(position.x, position.y);
+                    const range = rt.doc.caretRangeFromPoint(Math.floor(position.x + position.width), position.y);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    el.click();
+                }, 0);
+            } else {
+                // TODO: not working
+                if (action.btn.classList.contains('gjs-rte-active')) {
+                    let child = editor.getSelected();
+                    child.view.disableEditing({disableRte: false});
+                    child.view.onActive();
+                }
+            }
+            // selection.removeAllRanges();
+            // selection.addRange(range);
+            editor.getSelected().view.el.focus();
+        }
     });
 });
 rte.add('ordered-list', {
@@ -35,8 +74,8 @@ rte.add('ordered-list', {
     attributes: {
         title: 'OL'
     },
-    result: rte => {
-        rte.exec('insertOrderedList');
+    result: rt => {
+        rt.exec('insertOrderedList');
         editor.getSelected().view.el.focus();
     }
 });
@@ -46,8 +85,8 @@ rte.add('ordered-list', {
     attributes: {
         title: 'UL'
     },
-    result: rte => {
-        rte.exec('insertUnorderedList');
+    result: rt => {
+        rt.exec('insertUnorderedList');
         editor.getSelected().view.el.focus();
     }
 });

@@ -1,3 +1,6 @@
+function extendDefaultRtePrototype(rte) {
+    rte.hereIam = true;
+}
 
 function extendDefaultPrototype(editor) {
     const defaultType = editor.DomComponents.getType('default');
@@ -5,49 +8,43 @@ function extendDefaultPrototype(editor) {
         let lastTextParent = null;
         let parent = this.parent && this.parent();
 
-        console.group('outermostTextParent');
         while (parent != null) {
-            console.log(parent);
             if (parent.attributes.subtype === 'text') {
                 lastTextParent = parent;
             }
 
             parent = parent.parent && parent.parent();
         }
-        console.groupEnd();
 
         return lastTextParent;
     };
-}
 
-function mergeTextTypes(editor) {
-    const comps = editor.DomComponents;
-    comps.addType('mergedTexts', {
-        extend: 'text',
-        extendView: 'text',
-        isComponent(el) {
-            if (['A', 'P', 'SPAN', 'UL', 'OL'].includes(el.tagName)) {
-                return {
-                    type: 'text',
-                    // name: el.tagName,
-                    content: el.innerHTML,
-                    components: []
-                }
-            }
-        },
-    });
-}
+    // TODO: Move to RTE
+    defaultType.view.prototype.getSelection = function() {
+        if (this.el == null) { return null }
+        return this.el.ownerDocument.getSelection();
+    };
 
-// function defineDefault(editor) {
-//     const comps = editor.DomComponents;
-//     comps.addType('default', {
-//         extend: 'default',
-//         extendView: 'default',
-//         isComponent(el) {
-//
-//         }
-//     });
-// }
+    defaultType.view.prototype.createRangeFromMouseEvent = function(e) {
+        if (e == null || e.clientX == null || e.clientY == null || this.el == null) {
+            return null;
+        }
+
+        const ownerDocument = this.el.ownerDocument;
+        return ownerDocument.caretRangeFromPoint(e.clientX, e.clientY);
+    };
+
+    defaultType.view.prototype.positionCaretAtMouseEvent = function(e) {
+        const selection = this.getSelection();
+        const range = this.createRangeFromMouseEvent(e);
+
+        if (selection == null || range == null) { return false; }
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return true;
+    }
+}
 
 function defineText(editor) {
     const comps = editor.DomComponents;
@@ -73,31 +70,17 @@ function defineText(editor) {
                     'data-ch-type': 'text'
                 }
             },
-            // myMethod() {
-            //   console.log('hello');
-            // }
         },
         view: {
             events: {
                 dblclick: 'onDoubleClick'
             },
-            // events: {
-            //     // 'click': 'handleClick'
-            // },
-            // handleClick(e) {
-            //     // console.log('sel', editor.getSelected());
-            //     // console.log(this, e);
-            //     this.onActive(e);
-            // },
-
             onDoubleClick(e) {
-                console.log(e);
-                console.log('ondblclick', this);
                 e.preventDefault();
-
                 this.onActive(e);
             },
             initialize(o) {
+                console.log('init view [', o.model.get('type'), ']');
                 textViewInitialize.call(this, o);
                 // Clean all child components
                 // Mostly removes boxes and default types
@@ -112,11 +95,19 @@ function defineText(editor) {
 
                 const textParent = this.model.outermostTextParent();
                 if (textParent != null) {
-                    console.log('textparent found', textParent);
-                    setTimeout(() => {
+                    // setTimeout(() => {
+                        const isAlreadyEditable =
+                            textParent.view.el.getAttribute('contenteditable') === 'true';
+
                         editor.select(textParent);
                         textParent.view.onActive(null);
-                    }, 0);
+
+                        // If e is present, then this child is the target of onActive event
+                        // If parent is already editable, there is no need to reposition caret
+                        if (e != null && isAlreadyEditable === false) {
+                            this.positionCaretAtMouseEvent(e);
+                        }
+                    // }, 0);
 
                     return;
                 }
@@ -124,8 +115,8 @@ function defineText(editor) {
                 e && e.stopPropagation && e.stopPropagation();
                 const rte = this.rte;
                 const children = this.model.get('components');
+
                 children.forEach(child => {
-                    console.log(child);
                     if (child.view && child.view.el && child.attributes) {
                         if (child.attributes.subtype === 'text') {
                             child.view.el.setAttribute('contenteditable', 'true');
@@ -136,38 +127,36 @@ function defineText(editor) {
                 if (rte) {
                     try {
                         this.activeRte = rte.enable(this, this.activeRte);
-                        // this.activeRte.selection().collapseToEnd();
                     } catch (err) {
                         console.error(err);
                     }
                 }
-                //
-                // console.log(this.activeRte.selection());
-                // console.log(this.activeRte.doc);
-                // {
-                //
-                // }
-                //
-                // // Consolidate range into caret
-                // const selection = this.activeRte.selection();
-                // const doc = this.activeRte.doc;
-                //
+
+                if (e != null) {
+                    this.positionCaretAtMouseEvent(e);
+                }
 
                 this.rteEnabled = 1;
                 this.toggleEvents(1);
             },
-            disableEditing() {
-                console.log('hello', this.el);
+
+            disableEditing(options) {
+                const mergedOptions = Object.assign({
+                    disableRte: true
+                }, options);
+
                 const model = this.model;
                 const editable = model.get('editable');
                 const rte = this.rte;
                 const contentOpt = { fromDisable: 1 };
 
                 if (rte && editable) {
-                    try {
-                        rte.disable(this, this.activeRte);
-                    } catch (err) {
-                        console.error(err);
+                    if (mergedOptions.disableRte === true) {
+                        try {
+                            rte.disable(this, this.activeRte);
+                        } catch (err) {
+                            console.error(err);
+                        }
                     }
 
                     const content = this.getChildrenContainer().innerHTML;
@@ -244,7 +233,7 @@ function defineText(editor) {
                 this.toggleEvents();
             },
             clean(model) {
-                console.log('cleaning');
+                // console.log('cleaning');
                 // const selectable = !['text', 'default', ''].some(type =>
                 //     model.is(type)
                 // );
@@ -252,15 +241,17 @@ function defineText(editor) {
                 model.set({
                     // toolbar: '',
                     hoverable: false,
-                    selectable: false
+                    selectable: false,
+                    toolbar: '',
+                    badgable: false,
                 });
 
-                console.log(model, model.attributes.subtype);
+                // console.log(model, model.attributes.subtype);
 
                 if (model.attributes.subtype === 'text' && model.attributes.type !== 'text') {
                     model.set({
                         hoverable: true,
-                        selectable: true
+                        selectable: true,
                     });
                 }
 

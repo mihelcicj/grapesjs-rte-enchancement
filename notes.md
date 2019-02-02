@@ -9,3 +9,6 @@
 
 -   Types that are already defined do not inherit from extended Types
     ex. Link wont get extendedText changes
+    
+-   Methods for getting selection and creating range from mouse event are on all
+    view prototypes

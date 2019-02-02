@@ -80,7 +80,7 @@ function defineText(editor) {
                 this.onActive(e);
             },
             initialize(o) {
-                console.log('init view [', o.model.get('type'), ']');
+                // console.log('init view [', o.model.get('type'), ']');
                 textViewInitialize.call(this, o);
                 // Clean all child components
                 // Mostly removes boxes and default types

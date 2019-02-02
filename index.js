@@ -27,74 +27,119 @@ editor.DomComponents.getWrapper().set({
 });
 
 const rte = editor.RichTextEditor;
-console.log(rte);
 extendDefaultRtePrototype(rte);
 
 ['bold', 'italic', 'strikethrough', 'underline', 'link'].forEach(i => rte.remove(i));
-['Bold', 'Italic', 'Underline'].forEach(opt => {
+['Bold', 'Italic', 'Underline', 'createLink', 'unlink', 'insertOrderedList'].forEach(opt => {
     const lowerCaseOpt = opt.toLowerCase();
     rte.add(lowerCaseOpt, {
         icon: `<span class="fa fa-${lowerCaseOpt}"></span>`,
         attributes: {title: opt},
         result: (rt, action) => {
-            console.log(action, rt);
-            rt.exec(lowerCaseOpt);
-            const selection = rt.selection();
-            const range = selection.getRangeAt(0).cloneRange();
-            const position = range.getBoundingClientRect();
 
-            if (selection.type === 'Range') {
+            if (lowerCaseOpt === 'insertorderedlist' || lowerCaseOpt === 'insertunorderedlist') {
+                rt.exec(lowerCaseOpt);
+                const selection = rt.selection();
+                let range = rt.doc.createRange();
+                let position = null;
+
+                range.selectNode(selection.anchorNode);
+                position = range.getBoundingClientRect();
+
+                // Reload view
                 let child = editor.getSelected();
                 child.view.disableEditing({disableRte: false});
                 child.view.onActive();
+                editor.getSelected().view.el.focus();
 
                 setTimeout(() => {
                     const el = rt.doc.elementFromPoint(position.x, position.y);
-                    const range = rt.doc.caretRangeFromPoint(Math.floor(position.x + position.width), position.y);
+
+                    range.selectNode(el);
                     selection.removeAllRanges();
                     selection.addRange(range);
+                    selection.collapseToEnd();
+
                     el.click();
                 }, 0);
-            } else {
-                // TODO: not working
-                if (action.btn.classList.contains('gjs-rte-active')) {
-                    let child = editor.getSelected();
-                    child.view.disableEditing({disableRte: false});
-                    child.view.onActive();
-                }
             }
-            // selection.removeAllRanges();
-            // selection.addRange(range);
+
+            const selection = rt.selection();
+            const position = selection.getRangeAt(0).getBoundingClientRect();
+
+            if (selection.type === 'Range') {
+                rt.exec(lowerCaseOpt);
+
+                let child = editor.getSelected();
+                child.view.disableEditing({disableRte: false});
+                child.view.onActive();
+                editor.getSelected().view.el.focus();
+
+                setTimeout(() => {
+                    const el = rt.doc.elementFromPoint(position.x, position.y);
+                    const newPosition = el.getBoundingClientRect();
+                    const range = rt.doc.caretRangeFromPoint(newPosition.x + newPosition.width, newPosition.y);
+
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    el.click();
+                }, 0);
+
+                return;
+            }
+
+
+
+
+            // // TODO: not working
+            // if (action.btn.classList.contains('gjs-rte-active')) {
+            //     let child = editor.getSelected();
+            //     child.view.disableEditing({disableRte: false});
+            //     child.view.onActive();
+            //
+            //     setTimeout(() => {
+            //         const el = rt.doc.elementFromPoint(position.x, position.y);
+            //         const range = rt.doc.caretRangeFromPoint(Math.floor(position.x + position.width), position.y);
+            //
+            //         const space = document.createElement("span");
+            //         space.innerHTML = "\u200B";
+            //
+            //         range.insertNode(space);
+            //         range.collapse(false);
+            //
+            //
+            //
+            //         selection.removeAllRanges();
+            //         selection.addRange(range);
+            //         el.click();
+            //     }, 0);
+            // }
             editor.getSelected().view.el.focus();
         }
     });
 });
-rte.add('ordered-list', {
-    icon: `<span class="fa fa-list-ol"></span>`,
-    attributes: {
-        title: 'OL'
-    },
-    result: rt => {
-        rt.exec('insertOrderedList');
-        editor.getSelected().view.el.focus();
-    }
-});
-
-rte.add('ordered-list', {
-    icon: `<span class="fa fa-list-ul"></span>`,
-    attributes: {
-        title: 'UL'
-    },
-    result: rt => {
-        rt.exec('insertUnorderedList');
-        editor.getSelected().view.el.focus();
-    }
-});
-rte.add('insertHTML', {
-    icon: `INS`,
-    attributes: {title: 'Insert'},
-    result: rt => rt.insertHTML(`<span data-stylable="true" style="background:rgba(255,0,0, 0.1)">${rt.selection()}</span>`)
-});
+// rte.add('ordered-list', {
+//     icon: `<span class="fa fa-list-ol"></span>`,
+//     attributes: {
+//         title: 'OL'
+//     },
+//     result: rt => {
+//         rt.exec('insertOrderedList');
+//         editor.getSelected().view.el.focus();
+//     }
+// });
+//
+// rte.add('ordered-list', {
+//     icon: `<span class="fa fa-list-ul"></span>`,
+//     attributes: {
+//         title: 'UL'
+//     },
+//     result: rt => {
+//         rt.exec('insertUnorderedList');
+//         editor.getSelected().view.el.focus();
+//     }
+// });
 
 // Extending default type with helper methods
 extendDefaultPrototype(editor);
